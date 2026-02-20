@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G5 Arena Manager v3.1</title>
+<style>
+/* --- PREMIUM LIGHT THEME & RESET --- */
+:root {
+    --primary: #111827;
+    --primary-hover: #374151;
+    --bg: #ffffff;
+    --card-bg: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --success: #059669;
+    --danger: #dc2626;
+    --border: #e5e7eb;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+* { box-sizing: border-box; outline: none; }
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- LAYOUT --- */
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+.header {
+    background: #ffffff;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+.brand { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; color: var(--primary); }
+.brand span { font-weight: 300; }
+.version { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 8px; }
+
+.main-container { display: flex; flex: 1; overflow: hidden; }
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 72px;
+    background: #f9fafb;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 24px;
+    z-index: 5;
+}
+.nav-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 16px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    font-size: 20px;
+}
+.nav-item:hover { background: #e5e7eb; color: var(--primary); }
+.nav-item.active { background: var(--primary); color: white; box-shadow: var(--shadow); }
+
+/* --- CONTENT --- */
+.content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: none;
+    background: #fafafa;
+}
+.content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from {opacity:0; transform:translateY(4px);} to {opacity:1; transform:translateY(0);} }
+
+/* --- GRID & CARDS --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    transition: 0.2s;
+    position: relative;
+}
+.card:hover { border-color: #d1d5db; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+.card.running { border: 1px solid var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+
+.card-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: flex-start; }
+.asset-name { font-size: 18px; font-weight: 700; color: var(--primary); }
+.asset-rate { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+
+.badge {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge.avail { background: #dcfce7; color: var(--success); }
+.badge.busy { background: #fee2e2; color: var(--danger); }
+
+/* --- CONTROLS --- */
+button {
+    cursor: pointer; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; transition: 0.2s; font-size: 14px;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #047857; }
+.btn-ghost { background: #f3f4f6; color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: #e5e7eb; border-color: #d1d5db; }
+
+/* --- STATS BOX --- */
+.stats-box { 
+    background: #f9fafb; border-radius: 12px; padding: 16px; margin: 16px 0; border: 1px solid var(--border);
+}
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-muted); align-items: center; }
+.stat-total { border-top: 1px dashed var(--border); margin-top: 12px; padding-top: 12px; font-size: 18px; font-weight: 800; color: var(--primary); display: flex; justify-content: space-between;}
+
+/* --- INPUTS --- */
+input, select, textarea {
+    background: #ffffff; border: 1px solid var(--border); color: var(--text); padding: 10px 12px;
+    border-radius: 8px; width: 100%; margin-bottom: 12px; font-size: 14px; transition: 0.2s;
+}
+input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.1); }
+
+/* --- REVENUE TOGGLE --- */
+.revenue-hidden { filter: blur(10px); user-select: none; pointer-events: none; opacity: 0.5; }
+.eye-icon { cursor: pointer; font-size: 20px; padding: 4px; transition: 0.2s; }
+.eye-icon:hover { opacity: 0.7; }
+
+/* --- SETTINGS TABLE --- */
+.settings-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+.settings-table th { background: #f9fafb; color: var(--text-muted); font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--border); }
+.settings-table td, .settings-table th { padding: 12px 16px; text-align: left; }
+.settings-table td { border-bottom: 1px solid var(--border); }
+.settings-table input { width: 120px; margin: 0; padding: 8px; }
+
+/* MOBILE ADJUSTMENTS */
+@media (max-width: 600px) {
+    .header h1 { font-size: 18px; }
+    .grid { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+    <div class="header">
+        <div class="brand">G5 <span>ARENA</span> <span class="version">v3.1.0</span></div>
+        <div id="clock" style="font-family: monospace; font-size: 16px; font-weight: 600; color: var(--text-muted);">00:00:00</div>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="switchTab('dashboard')" title="Dashboard">⚄</div>
+            <div class="nav-item" onclick="switchTab('menu')" title="Menu">🍹</div>
+            <div class="nav-item" onclick="switchTab('reports')" title="Reports">📈</div>
+            <div class="nav-item" onclick="switchTab('settings')" title="Settings">⚙️</div>
+        </div>
+
+        <div id="dashboard" class="content active">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="margin:0; font-weight:800;">Live Arena</h2>
+            </div>
+            <div id="asset-grid" class="grid"></div>
+        </div>
+
+        <div id="menu" class="content">
+            <h2 style="margin-top:0; font-weight:800;">Inventory Management</h2>
+            <div id="menu-editor" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));"></div>
+            <button class="btn-primary" style="margin-top:24px" onclick="addNewMenuItem()">+ Add New Item</button>
+        </div>
+
+        <div id="reports" class="content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                <h2 style="margin:0; font-weight:800;">Revenue Reports</h2>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <input type="date" id="report-date" style="margin:0; width:auto; padding:8px 12px; font-weight:600;" onchange="renderReports()">
+                    <div class="eye-icon" onclick="toggleRevenue()" title="Show/Hide Revenue">
+                        <span id="eye-icon">🔒</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:24px; margin-bottom:32px; flex-wrap:wrap;">
+                <div class="card" style="flex:1; min-width:250px;">
+                    <div style="color:var(--text-muted); margin-bottom:8px; font-weight:600; font-size:13px;">TOTAL REVENUE</div>
+                    <div id="today-total-container" class="revenue-hidden">
+                        <h1 style="color:var(--primary); margin:0; font-size: 32px;" id="today-total">₹0</h1>
+                    </div>
+                </div>
+                <div class="card" style="flex:1; min-width:250px;">
+                    <div style="color:var(--text-muted); margin-bottom:8px; font-weight:600; font-size:13px;">SESSIONS COMPLETED</div>
+                    <h1 style="margin:0; color:var(--text); font-size: 32px;" id="today-count">0</h1>
+                </div>
+            </div>
+            
+            <h3 style="font-weight:700; color:var(--text-muted); margin-bottom:16px;">Session History</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <div id="settings" class="content">
+            <h2 style="margin-top:0; font-weight:800;">Arena Configuration</h2>
+            <p style="color:var(--text-muted); margin-bottom:24px;">Modify asset names and hourly rates here.</p>
+            <div style="max-width: 700px; border: 1px solid var(--border); border-radius: 12px; padding: 1px;">
+                <table class="settings-table">
+                    <thead>
+                        <tr>
+                            <th>Asset Name</th>
+                            <th>Type</th>
+                            <th>Rate (₹/hr)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="settings-body"></tbody>
+                </table>
+            </div>
+            <button class="btn-success" style="margin-top:24px; padding: 12px 24px;" onclick="saveAssetSettings()">Save Configurations</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* --- HELPERS --- */
+// Get a stable YYYY-MM-DD string matching local time zone
+function getLocalDateString(timestamp) {
+    const d = new Date(timestamp);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/* --- DATA & CONFIG --- */
+const DEFAULT_ASSETS = [
+    { id: 0, name: "English (T1)", type: "pool", rate: 300 },
+    { id: 1, name: "French (T2)", type: "pool", rate: 200 },
+    { id: 2, name: "French (T3)", type: "pool", rate: 200 },
+    { id: 3, name: "PS5 1", type: "ps5", rate: 150 },
+    { id: 4, name: "PS5 2", type: "ps5", rate: 150 },
+    { id: 5, name: "Other", type: "other", rate: 180 }
+];
+
+const DEFAULT_ITEMS = [
+    { name: "Cola", price: 40 },
+    { name: "Water", price: 20 },
+    { name: "Energy Drink", price: 100 },
+    { name: "Tea/Coffee", price: 20 },
+    { name: "Snacks", price: 30 },
+    { name: "Juice", price: 50 }
+];
+
+// State
+let assets = JSON.parse(localStorage.getItem('g5_assets_v31')) || DEFAULT_ASSETS;
+let menu = JSON.parse(localStorage.getItem('g5_menu_v31')) || DEFAULT_ITEMS;
+let activeSessions = JSON.parse(localStorage.getItem('g5_active_v31')) || {};
+let history = JSON.parse(localStorage.getItem('g5_history_v31')) || [];
+let showRevenue = false;
+
+// Initialize Date Picker
+document.getElementById('report-date').value = getLocalDateString(Date.now());
+
+/* --- PERSISTENCE --- */
+function saveAll() {
+    localStorage.setItem('g5_assets_v31', JSON.stringify(assets));
+    localStorage.setItem('g5_menu_v31', JSON.stringify(menu));
+    localStorage.setItem('g5_active_v31', JSON.stringify(activeSessions));
+    localStorage.setItem('g5_history_v31', JSON.stringify(history));
+    renderAll();
+}
+
+/* --- LOGIC: SESSIONS --- */
+function startSession(assetId) {
+    if (activeSessions[assetId]) return;
+    activeSessions[assetId] = {
+        start: Date.now(),
+        drinks: [],
+        joysticks: 0
+    };
+    saveAll();
+}
+
+function stopSession(assetId) {
+    const session = activeSessions[assetId];
+    const asset = assets.find(a => a.id === assetId);
+    const end = Date.now();
+    
+    let durationHours = (end - session.start) / 1000 / 60 / 60;
+    if (durationHours < 0) durationHours = 0; // Fallback if future time was accidentally set
+
+    const baseCost = durationHours * asset.rate;
+    const joystickCost = (asset.type === 'ps5') ? (durationHours * session.joysticks * 50) : 0;
+    const drinksCost = session.drinks.reduce((acc, d) => acc + d.price, 0);
+    const total = Math.round(baseCost + joystickCost + drinksCost);
+
+    const record = {
+        id: Date.now(), // Unique ID used for date correlation
+        assetName: asset.name,
+        start: new Date(session.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}),
+        end: new Date(end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}),
+        duration: (durationHours * 60).toFixed(0) + " min",
+        total: total,
+        details: `Time: ₹${Math.round(baseCost)} | Extras: ₹${Math.round(joystickCost)} | Items: ₹${drinksCost}`
+    };
+
+    if(confirm(`Checkout ${asset.name}?\nTotal Bill: ₹${total}`)) {
+        history.unshift(record);
+        delete activeSessions[assetId];
+        saveAll();
+    }
+}
+
+function editStartTime(assetId) {
+    const session = activeSessions[assetId];
+    const currentObj = new Date(session.start);
+    const currentHHMM = currentObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+    
+    const newTime = prompt("Edit session start time (HH:MM in 24-hour format):", currentHHMM);
+    
+    if (newTime && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(newTime)) {
+        const [hrs, mins] = newTime.split(':');
+        currentObj.setHours(parseInt(hrs), parseInt(mins), 0, 0);
+        
+        if (currentObj.getTime() > Date.now()) {
+            alert("Warning: Start time cannot be set to a future time.");
+            return;
+        }
+        
+        session.start = currentObj.getTime();
+        saveAll();
+    } else if (newTime !== null) {
+        alert("Invalid format! Please use standard HH:MM (e.g., 14:30 or 09:15).");
+    }
+}
+
+function addDrink(assetId, drinkIndex) {
+    const drink = menu[drinkIndex];
+    activeSessions[assetId].drinks.push(drink);
+    saveAll();
+}
+
+function removeDrink(assetId, drinkName) {
+    const session = activeSessions[assetId];
+    // Find the last occurrence of the exact drink name and splice it
+    const index = session.drinks.map(d => d.name).lastIndexOf(drinkName);
+    if (index > -1) {
+        session.drinks.splice(index, 1);
+        saveAll();
+    }
+}
+
+function updateJoysticks(assetId, delta) {
+    let current = activeSessions[assetId].joysticks;
+    if (current + delta >= 0 && current + delta <= 4) {
+        activeSessions[assetId].joysticks += delta;
+        saveAll();
+    }
+}
+
+function deleteHistoryItem(id) {
+    if(confirm("Delete this session record?\nThis action cannot be undone and will recalculate total revenue.")) {
+        history = history.filter(h => h.id !== id);
+        saveAll();
+    }
+}
+
+/* --- LOGIC: ASSET SETTINGS --- */
+function saveAssetSettings() {
+    const rows = document.querySelectorAll('.settings-row');
+    rows.forEach(row => {
+        const id = parseInt(row.dataset.id);
+        const name = row.querySelector('.set-name').value;
+        const rate = parseFloat(row.querySelector('.set-rate').value);
+        
+        const asset = assets.find(a => a.id === id);
+        if(asset) {
+            asset.name = name;
+            asset.rate = rate;
+        }
+    });
+    alert("Configurations Saved Successfully!");
+    saveAll();
+}
+
+/* --- RENDERING --- */
+function renderAll() {
+    renderDashboard();
+    renderMenu();
+    renderReports();
+    renderSettings();
+}
+
+function renderDashboard() {
+    const grid = document.getElementById('asset-grid');
+    grid.innerHTML = '';
+
+    assets.forEach(asset => {
+        const session = activeSessions[asset.id];
+        let cardHtml = '';
+
+        if (!session) {
+            // AVAILABLE
+            cardHtml = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-rate">₹${asset.rate}/hr</div>
+                        </div>
+                        <span class="badge avail">Available</span>
+                    </div>
+                    <button class="btn-success" style="width:100%; font-size:15px; padding:12px; margin-top:20px;" onclick="startSession(${asset.id})">Start Session</button>
+                </div>
+            `;
+        } else {
+            // RUNNING
+            const now = Date.now();
+            let durHrs = (now - session.start) / 1000 / 60 / 60;
+            if(durHrs < 0) durHrs = 0; // Fallback safeguard
+            
+            const baseCost = durHrs * asset.rate;
+            const joystickCost = (asset.type === 'ps5') ? (durHrs * session.joysticks * 50) : 0;
+            const drinksCost = session.drinks.reduce((acc, d) => acc + d.price, 0);
+            const total = Math.round(baseCost + joystickCost + drinksCost);
+            
+            // Format start time string
+            const startTimeStr = new Date(session.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            // Group added drinks
+            const addedDrinksMap = {};
+            session.drinks.forEach((d) => {
+                if (!addedDrinksMap[d.name]) addedDrinksMap[d.name] = { count: 0, price: d.price };
+                addedDrinksMap[d.name].count++;
+            });
+
+            // UI for grouped added drinks
+            let addedItemsHtml = '';
+            if (session.drinks.length > 0) {
+                addedItemsHtml = `<div style="margin-top:16px; background:#f9fafb; padding:12px; border-radius:8px; border:1px solid var(--border);">
+                    <div style="font-size:10px; font-weight:700; color:var(--text-muted); margin-bottom:8px; letter-spacing:0.5px;">ADDED ITEMS</div>`;
+                for (const [name, data] of Object.entries(addedDrinksMap)) {
+                    addedItemsHtml += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:13px; font-weight:500;">
+                            <span>${name} <span style="color:var(--text-muted); font-size:12px;">x${data.count}</span></span>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <span style="font-weight:700; color:var(--text);">₹${data.price * data.count}</span>
+                                <button class="btn-ghost" style="padding:2px 8px; font-size:14px; border-radius:4px; font-weight:bold; height:24px; line-height:1;" onclick="removeDrink(${asset.id}, '${name}')">-</button>
+                            </div>
+                        </div>`;
+                }
+                addedItemsHtml += `</div>`;
+            }
+
+            // UI for standard menu buttons
+            const drinksBtns = menu.map((d, i) => 
+                `<button class="btn-ghost" style="font-size:12px; padding:6px 12px; margin:4px 4px 0 0;" onclick="addDrink(${asset.id}, ${i})">${d.name} <span style="opacity:0.6;font-size:10px;">₹${d.price}</span></button>`
+            ).join('');
+
+            let ps5Controls = '';
+            if (asset.type === 'ps5') {
+                ps5Controls = `
+                    <div class="stat-row" style="background:#ffffff; border:1px solid var(--border); padding:8px 12px; border-radius:8px; margin-top:10px; align-items:center;">
+                        <span style="font-weight:600; color:var(--text);">Extra Joysticks: <span style="font-size:16px; margin:0 5px; color:var(--primary);">${session.joysticks}</span></span>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-ghost" style="padding:4px 12px" onclick="updateJoysticks(${asset.id}, -1)">-</button>
+                            <button class="btn-ghost" style="padding:4px 12px" onclick="updateJoysticks(${asset.id}, 1)">+</button>
+                        </div>
+                    </div>`;
+            }
+
+            cardHtml = `
+                <div class="card running">
+                    <div class="card-header" style="margin-bottom:12px;">
+                        <div class="asset-name">${asset.name}</div>
+                        <span class="badge busy">Running</span>
+                    </div>
+                    
+                    <div class="stats-box">
+                        <div class="stat-row">
+                            <span>Started</span> 
+                            <span style="color:var(--text); font-weight:600; display:flex; align-items:center; gap:8px;">
+                                ${startTimeStr}
+                                <button class="btn-ghost" style="padding:2px 6px; font-size:12px; border:none; background:transparent;" onclick="editStartTime(${asset.id})" title="Edit Start Time">✏️</button>
+                            </span>
+                        </div>
+                        <div class="stat-row"><span>Time</span> <span style="color:var(--text); font-weight:600;">${(durHrs*60).toFixed(0)} min</span></div>
+                        <div class="stat-row"><span>Base Cost</span> <span>₹${baseCost.toFixed(0)}</span></div>
+                        ${asset.type === 'ps5' ? `<div class="stat-row"><span>Extras</span> <span>₹${joystickCost.toFixed(0)}</span></div>` : ''}
+                        <div class="stat-row"><span>Items Cost</span> <span>₹${drinksCost}</span></div>
+                        <div class="stat-total"><span>TOTAL DUE</span> <span>₹${total}</span></div>
+                    </div>
+
+                    ${ps5Controls}
+                    
+                    ${addedItemsHtml}
+
+                    <div style="margin-top:16px; border-top:1px dashed var(--border); padding-top:16px;">
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:10px; letter-spacing:0.5px;">QUICK ADD ITEMS</div>
+                        <div style="display:flex; flex-wrap:wrap;">${drinksBtns}</div>
+                    </div>
+
+                    <button class="btn-danger" style="width:100%; margin-top:24px; padding:14px; font-size:15px;" onclick="stopSession(${asset.id})">Stop & Checkout</button>
+                </div>
+            `;
+        }
+        grid.innerHTML += cardHtml;
+    });
+}
+
+function renderMenu() {
+    const el = document.getElementById('menu-editor');
+    el.innerHTML = '';
+    menu.forEach((item, i) => {
+        el.innerHTML += `
+        <div class="card" style="padding:16px; display:flex; gap:12px; align-items:center;">
+            <div style="flex:1">
+                <input type="text" value="${item.name}" onchange="updateMenuItem(${i}, 'name', this.value)" style="margin:0 0 8px 0;">
+                <input type="number" value="${item.price}" onchange="updateMenuItem(${i}, 'price', this.value)" style="margin:0;">
+            </div>
+            <button class="btn-ghost" onclick="deleteMenuItem(${i})" style="padding:12px; color:var(--danger); border-color:var(--danger); background:transparent;" title="Delete Item">🗑️</button>
+        </div>`;
+    });
+}
+
+function renderReports() {
+    // Determine target date from picker
+    let selectedDate = document.getElementById('report-date').value;
+    if (!selectedDate) {
+        selectedDate = getLocalDateString(Date.now());
+        document.getElementById('report-date').value = selectedDate;
+    }
+
+    // Filter by selected date
+    const dateLog = history.filter(h => getLocalDateString(h.id) === selectedDate);
+    const total = dateLog.reduce((s, x) => s + x.total, 0);
+
+    const totalEl = document.getElementById('today-total');
+    totalEl.innerText = `₹${total}`;
+    
+    // Privacy Toggle
+    const container = document.getElementById('today-total-container');
+    if(showRevenue) {
+        container.classList.remove('revenue-hidden');
+        document.getElementById('eye-icon').innerText = '🔓';
+    } else {
+        container.classList.add('revenue-hidden');
+        document.getElementById('eye-icon').innerText = '🔒';
+    }
+
+    document.getElementById('today-count').innerText = dateLog.length;
+
+    const list = document.getElementById('history-list');
+    list.innerHTML = '';
+    
+    if (dateLog.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:32px; color:var(--text-muted); background:white; border-radius:12px; border:1px dashed var(--border);">No sessions recorded for this date.</div>`;
+    } else {
+        dateLog.forEach(h => {
+            list.innerHTML += `
+            <div class="card" style="padding:16px; margin-bottom:12px; border-radius:12px; padding-right:48px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:var(--text); font-weight:700; font-size:16px;">${h.assetName}</span>
+                    <span style="color:var(--primary); font-weight:800; font-size:16px;">₹${h.total}</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted); font-weight:500;">${h.start} - ${h.end} (${h.duration})</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:8px; background:#f3f4f6; padding:8px; border-radius:6px;">${h.details}</div>
+                <button class="btn-ghost" style="position:absolute; top:16px; right:16px; padding:6px; color:var(--text-muted); border:none; background:transparent; font-size:16px; transition:0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-muted)'" onclick="deleteHistoryItem(${h.id})" title="Delete Record">🗑️</button>
+            </div>`;
+        });
+    }
+}
+
+function renderSettings() {
+    const tbody = document.getElementById('settings-body');
+    tbody.innerHTML = '';
+    assets.forEach(asset => {
+        tbody.innerHTML += `
+        <tr class="settings-row" data-id="${asset.id}">
+            <td><input type="text" class="set-name" value="${asset.name}" style="background:#f9fafb;"></td>
+            <td style="color:var(--text-muted); font-size:12px; font-weight:600; text-transform:uppercase;">${asset.type}</td>
+            <td><input type="number" class="set-rate" value="${asset.rate}" style="background:#f9fafb;"></td>
+        </tr>`;
+    });
+}
+
+/* --- ACTIONS --- */
+function updateMenuItem(i, field, val) {
+    if(field === 'price') val = parseFloat(val);
+    menu[i][field] = val;
+    saveAll();
+}
+function deleteMenuItem(i) {
+    if(confirm('Remove this item from the system?')) { menu.splice(i, 1); saveAll(); }
+}
+function addNewMenuItem() {
+    menu.push({name: "New Item", price: 0}); saveAll();
+}
+
+function toggleRevenue() {
+    if (!showRevenue) {
+        const pwd = prompt("Enter Admin Password:");
+        if (pwd === "g5786") {
+            showRevenue = true;
+        } else if (pwd !== null) {
+            alert("Incorrect Password!");
+            return;
+        }
+    } else {
+        showRevenue = false; // Hide immediately without password
+    }
+    renderReports();
+}
+
+function switchTab(id) {
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    const map = { 'dashboard':0, 'menu':1, 'reports':2, 'settings':3 };
+    document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
+    
+    if(id === 'reports') renderReports(); // Re-render to ensure date alignment
+}
+
+// Global Timer
+setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    renderDashboard(); // Updates running timers
+}, 1000);
+
+// Init
+renderAll();
+</script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = supabaseJs.createClient(
+    "https://hxwtspsptjwnlyjjlutc.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4d3RzcHNwdGp3bmx5ampsdXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTMxMjYsImV4cCI6MjA4NzE2OTEyNn0.kagQu658L1r4JGF8Q4JBVUusMZPFDnMGy1bTYsJ12Vs"
+  );
+</script>
+</body>
+</html>
